@@ -1,0 +1,137 @@
+# JS스터디
+
+#### [1주차]
+
+- **[05 불변 객체]**
+    - 개념: 한 번 생성된 이후 그 상태를 변경할 수 없는 객체
+    - 필요 이유
+        - 참조형 데이터의 가변성 문제:
+            - 객체의 내부 프로퍼티를 변경하면 원본 데이터가 직접 수정된다. 이는 대규모 프로젝트에서 의도치 않은 버그를 유발한다.
+        - 변경 전후 비교
+            - 데이터가 바뀌었을 때 알림을 보내거나 이전 상태와 현재 상태를 가시적으로 비교해야하는 프레임워크(React, Vue 등)에서 필수적이다.
+    - immutable.js, baobab.js 등의 라이브러리가 등장해서 인기를 끌고 있다.
+        - 자바스크립트 내장 객체가 아닌 라이브러리 자체에서 불변성을 지는 별도의 데이터 타입과 그에 따른 메서드를 제공한다.
+        
+    - 해결책
+    
+    | 구분 | 설명 | 특징 |
+    | --- | --- | --- |
+    | 얕은 복사(Shallow Copy) | 객체의 바로 아래 단계 값만 복사  | 중첩된 객체가 있을 경우, 내부 객체는 원본과 주소를 공유함. 
+    즉, 완벽한 불변성을 보장하지 못한다. |
+    | 깊은 복사(Deep Copy) | 내부의 모든 값을 하나하나 찾아 전부 복사 | 원본과 사본이 완전히 독립된 서로 다른 객체가 됨.  |
+    | 전문 라이브러리 | 실수 방지를 위해 시스템적으로 원본 수정을 못하게 막어버리는 방식 | Immutable.js 나 Immer.js 같은 라이브러리 사용. |
+    - Step 1. 단순 얕은 복사
+        - 문제점: 객체 내부의 객체(중첩 객체) 까지는 복사하지 못해 원본이 변경될 수 있다.
+    
+    ```jsx
+    var CopyObject = function (target) {
+    	var result = {};
+    	for ( var prop in target) {
+    		result[propr] = target[prop];
+    	}
+    	return result;
+    };
+    ```
+    
+    - Step 2. 재귀를 이용한 깊은 복사
+    
+    ```jsx
+    var copyObjectDeep = function(target) {
+    	var result = {};
+    	if (typeof target === 'object' && target != null) {
+    		for (var prop in target) {
+    			result[prop] = copyObjectDeep(target[prop]);
+    		}
+    	} else {
+    		result = target;
+    	}
+    	return result;
+    };
+    ```
+    
+    - Step 3. JSON을 활용한 간편한 깊은 복사
+        - JSON.parse(JSON.stringify(obj)) 방식
+        - 메서드나 숨겨진 프로퍼티 등 JSON으로 변경할 수 없는 프로퍼티들은 모두 무시
+    
+    ```jsx
+    var copyObjectViaJSON = function (target) {
+    	return JSON.parse(JSON.stringify(target));
+    };
+    
+    var obj = {
+    	a: 1,
+    	b: {
+    		c: null,
+    		d: [1,2],
+    		func1: function () {console.log(3);}
+    	},
+    	func2: function () {console.log(4); }
+    };
+    
+    var obj2 = copyObjectViaJSON(obj);
+    
+    obj2.a = 3;
+    obj2.b.c = 4;
+    obj.b.d[1] = 3;
+    
+    console.log(obj)  //{a:1, b: {c:null, d:[1,3], func1: f()}, func2: f() }
+    console.log(obj2) //{ a : 3, b: {c:4, d:[1,2]}}
+    	
+    	
+    ```
+    
+    - Step 4. 실전 활용 및 라이브러리
+        - 기본 문법
+            - ES6의 Spread Operator(…) 나 Object.assign을 사용하면 Step1 깊이의 불변성은 쉽게 확보할 수 있다.
+        - 전문 라이브러리
+            - 프로젝트가 커지면 시스템적으로 제약을 걸기 위해 immutable.js 나 immer.js를 사용한다.
+    
+    - 면접 예상 질문
+        - 얕은 복사와 깊은 복사의 차이
+            - 메모리 주소 공유 여부.
+            - 얕은 복사는 중첩된 객체의 주소를 공유하지만, 깊은 복사는 아예 새로운 메모리 공간에 모든 데이터를 독립적으로 생성한다.
+    
+
+[2주차]
+
+- **함수 선언문과 함수 표현식**
+    
+    둘 모두 함수를 새롭게 정의할 때 쓰이는 방식.
+    
+    **함수 선언문**: function 정의부만 존재하고 별도의 할당 명령이 없는 것.
+    
+    ```jsx
+    function a() { /*...... */} //함수 선언문. 함수명 a가 곧 변수명
+    
+    a(); //실행
+    ```
+    
+    **함수 표현식**: 정의한 function을 별도의 변수에 할당하는 것. 
+    
+    ```jsx
+    var b = function() { /* ... */} //익명 함수 표현식, 변수 b가 함수명
+    b();
+    
+    var c = function d () {/* ... */} //기명 함수 표현식, 변수명은 c, 함수명은 d
+    c(); //실행 OK
+    d(); //에러!
+    ```
+    
+
+*가장 큰 차이*
+
+**함수 선언문**
+
+-전체가 호이스팅 가능 ⇒ 선언 전에도 호출 가능.
+
+-동일한 변수명에서 서로 다른 값을 할당할 경우 나중에 할당한 값이 먼저 할당한 값을 덮어씌운다.
+
+(의도와는 다르게 동작할 가능성  ⇒ 위험성)
+
+**함수 표현식**
+
+-변수 선언부만 호이스팅 가능 ⇒ 할당이 이루어진 후에만 호출 가능.
+
+-선언 전에 호출하면 error 발생.
+
+⇒ 상대적으로 안전한 개념
